@@ -1,0 +1,24 @@
+const { getGeoFromIP, encryptData } = require('../utils/ipgeoLogger');
+
+app.post('/api/checkout', async (req, res) => {
+  try {
+    const geoData = await getGeoFromIP(req);
+    const encryptedGeo = encryptData(geoData);
+
+    const order = await Order.create({
+      ...req.body,
+      encrypted_geo: encryptedGeo,
+      ip: geoData.ip,
+    });
+
+    if (geoData.security?.is_proxy) {
+      console.log('⚠️ Proxy/VPN detected');
+      // Add review logic here
+    }
+
+    res.json({ success: true, orderId: order.id });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Checkout failed' });
+  }
+});
